@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الدردشة العشوائية</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+            background-color: #f0f0f0;
+            color: black;
+        }
+        h1 {
+            font-size: 40px;
+            margin-bottom: 40px;
+        }
+        #chat {
+            width: 80%;
+            height: 300px;
+            margin: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            overflow-y: scroll;
+            background-color: #fff;
+        }
+        input, button {
+            padding: 10px;
+            font-size: 18px;
+            margin-top: 10px;
+            width: 80%;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>الدردشة مع: <span id="chatPartner"></span></h1>
+    <div id="chat"></div>
+    <input type="text" id="messageInput" placeholder="أرسل رسالتك هنا">
+    <button id="sendMessageBtn">إرسال</button>
+
+    <script type="module">
+        // استيراد Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js";
+
+        // تهيئة Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCnHSUo_Vu53NidFWYlQ74_CyOyfVW_BqQ",
+            authDomain: "alaah-8d503.firebaseapp.com",
+            databaseURL: "https://alaah-8d503-default-rtdb.firebaseio.com",
+            projectId: "alaah-8d503",
+            storageBucket: "alaah-8d503.firebasestorage.app",
+            messagingSenderId: "365922482892",
+            appId: "1:365922482892:web:a843fbb3594d200c67e069",
+            measurementId: "G-D4TPJW4RT8"
+        };
+
+        const app = initializeApp(firebaseConfig); // تهيئة التطبيق
+        const db = getDatabase(app); // الحصول على قاعدة البيانات
+
+        // الحصول على المستخدم وشريكه في الدردشة من الرابط
+        const urlParams = new URLSearchParams(window.location.search);
+        const partner = urlParams.get('user');
+        const currentUser = sessionStorage.getItem("username");
+
+        document.getElementById('chatPartner').textContent = partner;
+
+        // مرجع الدردشة
+        const chatRef = ref(db, 'chats/' + currentUser + "-" + partner);
+
+        // إرسال الرسالة
+        document.getElementById('sendMessageBtn').addEventListener('click', function() {
+            const message = document.getElementById('messageInput').value;
+            if (message.trim() !== "") {
+                push(chatRef, {
+                    sender: currentUser,
+                    message: message,
+                    timestamp: Date.now()
+                });
+                document.getElementById('messageInput').value = ""; // مسح حقل الإدخال
+            }
+        });
+
+        // عرض الرسائل
+        onValue(chatRef, (snapshot) => {
+            const chatDiv = document.getElementById('chat');
+            chatDiv.innerHTML = ''; // تفريغ الرسائل القديمة
+            snapshot.forEach((childSnapshot) => {
+                const data = childSnapshot.val();
+                const messageElement = document.createElement('p');
+                messageElement.textContent = `${data.sender}: ${data.message}`;
+                chatDiv.appendChild(messageElement);
+            });
+
+            // التمرير إلى آخر الرسائل
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        });
+    </script>
+
+</body></html>
